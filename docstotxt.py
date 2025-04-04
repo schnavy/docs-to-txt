@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 import re
+import os
 
 def sanitize_filename(s):
     # Replace non-alphanumeric characters to create a safe filename.
@@ -56,18 +57,24 @@ def main():
     else:
         filename = f"{netloc}_{safe_links_selector}.txt"
 
+    # Ensure output directory exists
+    output_dir = "out"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    file_path = os.path.join(output_dir, filename)
+
     try:
         response = requests.get(base_url)
         response.raise_for_status()
         base_text = extract_text(response.text, content_selector)
-        with open(filename, "w", encoding="utf-8") as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(base_text)
-        print(f"Saved text content from {base_url} to {filename}")
+        print(f"Saved text content from {base_url} to {file_path}")
 
         links = get_internal_links(response.text, base_url, links_selector)
         print(f"Found {len(links)} internal link(s) in the container.")
 
-        with open(filename, "a", encoding="utf-8") as f:
+        with open(file_path, "a", encoding="utf-8") as f:
             for link in links:
                 try:
                     link_resp = requests.get(link)
